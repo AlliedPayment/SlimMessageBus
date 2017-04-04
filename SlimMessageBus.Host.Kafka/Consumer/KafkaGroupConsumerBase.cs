@@ -25,6 +25,7 @@ namespace SlimMessageBus.Host.Kafka
                 GroupId = group,
                 EnableAutoCommit = false
             };
+            config = messageBus.KafkaSettings.KafkaConsumerSettingsFactory.Create(config, messageBus.KafkaSettings);
             Consumer = new EventConsumer(config, MessageBus.KafkaSettings.BrokerList);
             Consumer.OnMessage += OnMessage;
             Consumer.OnEndReached += OnEndReached;

@@ -31,7 +31,7 @@ namespace SlimMessageBus.Host.Kafka
             KafkaSettings = kafkaSettings;
 
             Log.Info("Creating producers");
-            _producer = new Producer(kafkaSettings.BrokerList);
+            _producer = KafkaSettings.KafkaProducerFactory.Create(kafkaSettings.BrokerList,kafkaSettings);
             foreach (var topicName in Settings.Publishers.Select(x => x.DefaultTopic).Distinct())
             {
                 AddTopicProducerSafe(topicName);
@@ -115,7 +115,7 @@ namespace SlimMessageBus.Host.Kafka
                 if (!_topicProducers.TryGetValue(topic, out kafkaTopic))
                 {
                     Log.DebugFormat("Creating topic producer {0}", topic);
-                    kafkaTopic = new KafkaTopicProducer(topic, _producer);
+                    kafkaTopic = KafkaSettings.TopicProducerFactory.Create(topic, _producer, KafkaSettings);
                     _topicProducers.TryAdd(topic, kafkaTopic);
                 }
             }
