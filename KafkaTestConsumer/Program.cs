@@ -79,7 +79,7 @@ namespace KafkaTestConsumer
             
             var kafkaSettings = new KafkaMessageBusSettings(kafkaBrokers);
 
-            kafkaSettings.TopicSettings["acks"] = "0";
+            
             kafkaSettings.ProducerSettings["batch.num.messages"] = "1";
             kafkaSettings.ProducerSettings["message.max.bytes"] = "1000";
             kafkaSettings.ConsumerSettings["queued.min.messages"] = "1";
