@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Configuration;
 using Autofac;
 using Autofac.Extras.CommonServiceLocator;
@@ -8,6 +9,7 @@ using Sample.Images.FileStore.Disk;
 using Sample.Images.Messages;
 using Sample.Images.Worker.Handlers;
 using SlimMessageBus;
+using SlimMessageBus.Host.Autofac;
 using SlimMessageBus.Host.Config;
 using SlimMessageBus.Host.Serialization.Json;
 using SlimMessageBus.Host.ServiceLocator;
@@ -25,9 +27,13 @@ namespace Sample.Images.Worker
 
             var container = builder.Build();
 
+            AutofacMessageBusDependencyResolver.Container = container;
+
             // Set the service locator to an AutofacServiceLocator.
+            /*
             var csl = new AutofacServiceLocator(container);
             ServiceLocator.SetLocatorProvider(() => csl);
+            */
 
             return container;
         }
@@ -69,9 +75,23 @@ namespace Sample.Images.Worker
                         //    .Instances(3);
                     });
                 })
-                .WithDependencyResolverAsServiceLocator()
+                //.WithDependencyResolverAsServiceLocator()
+                .WithDependencyResolverAsAutofac()
                 .WithSerializer(new JsonMessageSerializer())
-                .WithProviderKafka(new KafkaMessageBusSettings(kafkaBrokers));
+                .WithProviderKafka(new KafkaMessageBusSettings(kafkaBrokers)
+                {
+                    ConsumerConfigFactory = (group) => new Dictionary<string, object>
+                    {
+                        {KafkaConfigKeys.Consumer.AutoCommitEnableMs, 5000},
+                        {KafkaConfigKeys.Consumer.StatisticsIntervalMs, 60000},
+                        {
+                            "default.topic.config", new Dictionary<string, object>
+                            {
+                                {KafkaConfigKeys.Consumer.AutoOffsetReset, KafkaConfigValues.AutoOffsetReset.Latest}
+                            }
+                        }
+                    }
+                });
 
             var messageBus = messageBusBuilder.Build();
             return messageBus;
