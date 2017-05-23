@@ -42,7 +42,8 @@ namespace KafkaTest
                 {"fetch.wait.max.ms", 10},
                 {"fetch.error.backoff.ms", 10},
                 {"fetch.min.bytes", 10},
-                {"fetch.min.bytes", 10}
+                {"socket.nagle.disable", true}
+
             };
             kafkaSettings.ConsumerConfigFactory = (group) => new Dictionary<string, object>
             {
@@ -51,7 +52,10 @@ namespace KafkaTest
                 {"queued.min.messages", 1},
                 {"api.version.request", true},
                 {"queue.buffering.max.ms", 1},
-                {"socket.blocking.max.ms", 1}
+                {"socket.blocking.max.ms", 1},
+                {"fetch.min.bytes", 10},
+                {"statistics.interval.ms", 500000},
+                {"socket.nagle.disable", true}
             };
             //  conf->set("fetch.min.bytes", "1", errstr);
             //  conf->set("queued.min.messages", "1", errstr);
