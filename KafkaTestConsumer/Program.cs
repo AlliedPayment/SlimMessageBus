@@ -79,22 +79,34 @@ namespace KafkaTestConsumer
             
             var kafkaSettings = new KafkaMessageBusSettings(kafkaBrokers);
 
-            
-            kafkaSettings.ProducerSettings["batch.num.messages"] = "1";
-            kafkaSettings.ProducerSettings["message.max.bytes"] = "1000";
-            kafkaSettings.ConsumerSettings["queued.min.messages"] = "1";
-            kafkaSettings.ConsumerSettings["api.version.request"] = "true";
-            kafkaSettings.ProducerSettings["api.version.request"] = "true";
-            kafkaSettings.ProducerSettings["queue.buffering.max.ms"] = "1";
-            kafkaSettings.ConsumerSettings["queue.buffering.max.ms"] = "1";
-            kafkaSettings.ConsumerSettings["socket.blocking.max.ms"] = "1";
-            kafkaSettings.ProducerSettings["socket.blocking.max.ms"] = "1";
-            kafkaSettings.ProducerSettings["fetch.wait.max.ms"] = "10";
-            kafkaSettings.ConsumerSettings["fetch.wait.max.ms"] = "10";
-            kafkaSettings.ProducerSettings["fetch.error.backoff.ms"] = "10";
-            kafkaSettings.ConsumerSettings["fetch.error.backoff.ms"] = "10";
-            kafkaSettings.ProducerSettings["fetch.min.bytes"] = "10";
-            kafkaSettings.ProducerSettings["fetch.min.bytes"] = "10";
+
+            kafkaSettings.ProducerConfigFactory = () => new Dictionary<string, object>
+            {
+                {"batch.num.messages", 1},
+                {"message.max.bytes", 1000},
+                {"api.version.request", true},
+                {"queue.buffering.max.ms", 1},
+                {"socket.blocking.max.ms", 1},
+                {"fetch.wait.max.ms", 10},
+                {"fetch.error.backoff.ms", 10},
+                {"fetch.min.bytes", 10},
+                {"socket.nagle.disable", true}
+
+            };
+            kafkaSettings.ConsumerConfigFactory = (group) => new Dictionary<string, object>
+            {
+                {"fetch.wait.max.ms", 10},
+                {"fetch.error.backoff.ms", 10},
+                {"queued.min.messages", 1},
+                {"api.version.request", true},
+                {"queue.buffering.max.ms", 1},
+                {"socket.blocking.max.ms", 1},
+                {"fetch.min.bytes", 10},
+                {"statistics.interval.ms", 500000},
+                {"socket.nagle.disable", true}
+            };
+
+
 
 
             var messageBusBuilder = new MessageBusBuilder()

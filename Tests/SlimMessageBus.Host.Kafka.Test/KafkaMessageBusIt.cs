@@ -88,7 +88,7 @@ namespace SlimMessageBus.Host.Kafka.Test
             // some unique string across all application instances
             var instanceId = "1";
             // address to your Kafka broker
-            var kafkaBrokers = "127.0.0.1:9092";
+            var kafkaBrokers = "172.16.4.241:9092";
 
             var messageBusBuilder = new MessageBusBuilder()
                 .Publish<PingMessage>(x =>
