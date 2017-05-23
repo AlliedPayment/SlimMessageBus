@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Common.Logging;
-using RdKafka;
+using Confluent.Kafka;
 using SlimMessageBus.Host.Config;
 
 namespace SlimMessageBus.Host.Kafka
@@ -39,25 +39,17 @@ namespace SlimMessageBus.Host.Kafka
                 var taskType = typeof(Task<>).MakeGenericType(_settings.ResponseType);
                 _taskResult = taskType.GetProperty("Result");
             }
-
         }
 
         private static List<object> ResolveInstances(ConsumerSettings settings, MessageBusBase messageBusBus)
         {
-            var subscribers = new List<object>();
+            var consumers = new List<object>();
             for (var i = 0; i < settings.Instances; i++)
             {
-                var subscriber = messageBusBus.Settings.DependencyResolver.Resolve(settings.ConsumerType).ToList();
-
-                Assert.IsFalse(subscriber.Count == 0,
-                    () => new ConfigurationMessageBusException($"There was no implementation of {settings.ConsumerType} returned by the resolver. Ensure you have registered an implementation for {settings.ConsumerType} in your DI container."));
-
-                Assert.IsFalse(subscriber.Count > 1,
-                    () => new ConfigurationMessageBusException($"More than one implementation of {settings.ConsumerType} returned by the resolver. Ensure you have registered exactly one implementation for {settings.ConsumerType} in your DI container."));
-
-                subscribers.Add(subscriber[0]);
+                var consumer = messageBusBus.Settings.DependencyResolver.Resolve(settings.ConsumerType);
+                consumers.Add(consumer);
             }
-            return subscribers;
+            return consumers;
         }
 
         private int _commitBatchSize = 10;
@@ -79,8 +71,8 @@ namespace SlimMessageBus.Host.Kafka
             string requestId = null, replyTo = null;
             DateTimeOffset? expires = null;
             var message = _settings.IsRequestMessage
-                ? _messageBus.DeserializeRequest(_settings.MessageType, msg.Payload, out requestId, out replyTo, out expires)
-                : _messageBus.Settings.Serializer.Deserialize(_groupConsumer.MessageType, msg.Payload);
+                ? _messageBus.DeserializeRequest(_settings.MessageType, msg.Value, out requestId, out replyTo, out expires)
+                : _messageBus.Settings.Serializer.Deserialize(_groupConsumer.MessageType, msg.Value);
 
             // Verify if the request/message is already expired
             if (expires.HasValue)
