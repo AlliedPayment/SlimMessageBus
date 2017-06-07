@@ -81,6 +81,7 @@ namespace SlimMessageBus.Host.Test
             var t20 = t0.AddSeconds(21);
 
             // act
+
             var raTask = _bus.Send(ra);
             var rbTask = _bus.Send(rb);
 
@@ -156,6 +157,7 @@ namespace SlimMessageBus.Host.Test
             };
 
             // act
+
             var r1Task = _bus.Send(r1);
             var r2Task = _bus.Send(r2, TimeSpan.FromSeconds(1));
             var r3Task = _bus.Send(r3);
@@ -164,7 +166,7 @@ namespace SlimMessageBus.Host.Test
             {
                 Task.WaitAll(new Task[] { r1Task, r2Task, r3Task }, 3000);
             }
-            catch (AggregateException)
+            catch (AggregateException e)
             {
             }
 
@@ -246,11 +248,14 @@ namespace SlimMessageBus.Host.Test
 
         #region Overrides of BaseMessageBus
 
-        public override Task Publish(Type messageType, byte[] payload, string topic)
+        protected override Task Publish(Type messageType, byte[] payload, string topic, int? partition = null)
         {
             // async execution (no wait)
             Task.Run(() =>
             {
+                try
+                {
+
                 string reqId, replyTo;
                 DateTimeOffset? expires;
                 var req = DeserializeRequest(messageType, payload, out reqId, out replyTo, out expires);
@@ -261,6 +266,13 @@ namespace SlimMessageBus.Host.Test
 
                 var respPayload = SerializeResponse(resp.GetType(), resp, reqId, null);
                 OnResponseArrived(respPayload, replyTo).Wait();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e);
+                    throw;
+                }
+
             });
 
             return Task.FromResult(0);

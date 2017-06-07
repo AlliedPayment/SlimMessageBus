@@ -180,7 +180,7 @@ namespace SlimMessageBus.Host.Kafka.Test
                     Timestamp = DateTime.UtcNow
                 });
             }
-
+            
             Parallel.ForEach(messages, m =>
             {
                 try

@@ -35,7 +35,7 @@ namespace SlimMessageBus.Host.Kafka
             : base(settings)
         {
             AssertSettings(settings);
-
+            
             KafkaSettings = kafkaSettings;
 
             Log.Info("Creating producer");
@@ -92,13 +92,25 @@ namespace SlimMessageBus.Host.Kafka
             base.OnDispose();
         }
 
-        public override async Task Publish(Type messageType, byte[] payload, string topic)
+      
+
+        protected override async Task Publish(Type messageType, byte[] payload, string topic, int? partition = null)
         {
-            Log.DebugFormat("Producing message of type {0} on topic {1} with size {2}", messageType.Name, topic, payload.Length);
-            // send the message to topic
-            var deliveryReport = await _producer.ProduceAsync(topic, null, payload);
-            // log some debug information
-            Log.DebugFormat("Delivered message at {0}", deliveryReport.TopicPartitionOffset);
+            try
+            {
+                var metadata = _producer.GetMetadata(false, topic).Topics.First();
+                var partitionCount = metadata.Partitions.Count;
+                Log.DebugFormat("Producing message of type {0} on topic {1} with size {2}", messageType.Name, topic, payload.Length);
+                // send the message to topic
+                var deliveryReport = await _producer.ProduceAsync(topic, null, 0, 0, payload, 0, payload.Length, partition.GetValueOrDefault(-1));
+                // log some debug information
+                Log.DebugFormat("Delivered message at {0}", deliveryReport.TopicPartitionOffset);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         #endregion

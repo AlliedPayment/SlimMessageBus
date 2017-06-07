@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SlimMessageBus.Host.Pipeline;
 
 namespace SlimMessageBus.Host.Config
 {
@@ -14,7 +15,7 @@ namespace SlimMessageBus.Host.Config
         /// </summary>
         public IMessageSerializer MessageWithHeadersSerializer { get; set; }
         public IDependencyResolver DependencyResolver { get; set; }
-
+        public IPipeline Pipeline { get; set; }
         public MessageBusSettings()
         {
             Publishers = new List<PublisherSettings>();

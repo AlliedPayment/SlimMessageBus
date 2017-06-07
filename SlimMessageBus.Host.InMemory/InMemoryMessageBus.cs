@@ -20,7 +20,7 @@ namespace SlimMessageBus.Host.InMemory
 
         #region Overrides of MessageBusBase
 
-        public override Task Publish(Type messageType, byte[] payload, string topic)
+        protected override Task Publish(Type messageType, byte[] payload, string topic, int? partition = null)
         {
             throw new NotImplementedException();
         }
