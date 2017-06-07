@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Timers;
 using Common.Logging;
 using SlimMessageBus.Host.Config;
+using SlimMessageBus.Host.Pipeline;
 using Timer = System.Timers.Timer;
 
 namespace SlimMessageBus.Host
@@ -21,7 +22,7 @@ namespace SlimMessageBus.Host
         protected readonly IPendingRequestStore PendingRequestStore;
         protected readonly Timer PendingRequestTimer;
 
-        private readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
+        protected readonly CancellationTokenSource _cancellationTokenSource = new CancellationTokenSource();
         public CancellationToken CancellationToken => _cancellationTokenSource.Token;
         protected bool IsDisposed = false;
 
@@ -40,6 +41,9 @@ namespace SlimMessageBus.Host
             };
             PendingRequestTimer.Elapsed += CleanPendingRequests;
             PendingRequestTimer.Start();
+
+            var builder = new PipelineBuilder(x => this.Publish(x), settings);
+            Settings.Pipeline = builder.Build();
         }
 
         private static void AssertSettings(MessageBusSettings settings)
@@ -111,12 +115,12 @@ namespace SlimMessageBus.Host
             return publisherSettings;
         }
 
-        protected virtual string GetDefaultTopic(Type messageType)
-        {
-            // when topic was not provided, lookup default topic from configuration
-            var publisherSettings = GetPublisherSettings(messageType);
-            return GetDefaultTopic(messageType, publisherSettings);
-        }
+        //protected virtual string GetDefaultTopic(Type messageType)
+        //{
+        //    // when topic was not provided, lookup default topic from configuration
+        //    var publisherSettings = GetPublisherSettings(messageType);
+        //    return GetDefaultTopic(messageType, publisherSettings);
+        //}
 
         protected virtual string GetDefaultTopic(Type messageType, PublisherSettings publisherSettings)
         {
@@ -129,18 +133,20 @@ namespace SlimMessageBus.Host
             return topic;
         }
 
-        public abstract Task Publish(Type messageType, byte[] payload, string topic);
+        protected abstract Task Publish(Type messageType, byte[] payload, string topic, int? partition = null);
 
-        public virtual async Task Publish(Type messageType, object message, string topic = null)
+        public virtual Task Publish(Type messageType, object message, string topic = null, int? partition = null)
         {
-            if (topic == null)
-            {
-                topic = GetDefaultTopic(messageType);
-            }
-            var payload = Settings.Serializer.Serialize(messageType, message);
 
-            Log.DebugFormat("Publishing message of type {0} to topic {1} with payload size {2}", messageType, topic, payload.Length);
-            await Publish(messageType, payload, topic);
+            var t = Settings.Pipeline.Send(new PipelineContext()
+            {
+                Intent = Intents.Publish,
+                MessageType = messageType,
+                Message = message,
+                Topic = topic,
+                PendingRequestStore = PendingRequestStore,
+            });
+            return (Task) t;
         }
 
 
@@ -149,6 +155,11 @@ namespace SlimMessageBus.Host
         public virtual async Task Publish<TMessage>(TMessage message, string topic = null)
         {
             await Publish(message.GetType(), message, topic);
+        }
+
+        protected Task Publish(PipelineContext context)
+        {
+            return Publish(context.MessageType, context.Payload, context.Topic, context.Partition);
         }
 
         #endregion
@@ -160,7 +171,28 @@ namespace SlimMessageBus.Host
             return timeout;
         }
 
-        protected virtual async Task<TResponseMessage> SendInternal<TResponseMessage>(IRequestMessage<TResponseMessage> request, TimeSpan? timeout, string topic, CancellationToken cancellationToken)
+        protected async virtual Task<TResponseMessage> SendInternal<TResponseMessage>(
+            IRequestMessage<TResponseMessage> request, TimeSpan? timeout, string topic,
+            CancellationToken cancellationToken)
+        {
+            var context = new PipelineContext()
+            {
+                CancellationToken = cancellationToken,
+                Intent = Intents.RequestResponse,
+                Topic = topic, 
+                Request = request,
+                MessageType = request.GetType(),
+                RequestTimeout = timeout,
+                Message = request,
+                ResponseMessageType = typeof(TResponseMessage),
+                PendingRequestStore = PendingRequestStore
+            };
+
+            await Settings.Pipeline.Send(context);
+            var typedTask = Convert<TResponseMessage>(context.RequestState.TaskCompletionSource.Task);
+            return await typedTask;
+        }
+        protected virtual async Task<TResponseMessage> SendInternal_Old<TResponseMessage>(IRequestMessage<TResponseMessage> request, TimeSpan? timeout, string topic, CancellationToken cancellationToken)
         {
             if (Settings.RequestResponse == null)
             {
@@ -377,5 +409,6 @@ namespace SlimMessageBus.Host
             var result = await task;
             return (T)result;
         }
+
     }
 }

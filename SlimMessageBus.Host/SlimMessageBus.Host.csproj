@@ -31,6 +31,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Banzai, Version=2.0.3.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\Banzai.2.0.3.1\lib\net45\Banzai.dll</HintPath>
+    </Reference>
     <Reference Include="Common.Logging, Version=3.3.1.0, Culture=neutral, PublicKeyToken=af08829b84f0328e, processorArchitecture=MSIL">
       <HintPath>..\packages\Common.Logging.3.3.1\lib\net40\Common.Logging.dll</HintPath>
       <Private>True</Private>
@@ -58,6 +61,17 @@
     <Compile Include="Config\Fluent\TopicConsumerBuilder.cs" />
     <Compile Include="Config\Fluent\TopicHandlerBuilder.cs" />
     <Compile Include="MessageBusExtensions.cs" />
+    <Compile Include="PipelineStages\GetRequestTimeoutStage.cs" />
+    <Compile Include="PipelineStages\GetTopicStage.cs" />
+    <Compile Include="PipelineStages\SendInternalStage.cs" />
+    <Compile Include="PipelineStages\SerializeRequestResponseMessage.cs" />
+    <Compile Include="PipelineStages\SerializeTransportMessageStage.cs" />
+    <Compile Include="Pipeline\IPipeline.cs" />
+    <Compile Include="Pipeline\PipelineBuilder.cs" />
+    <Compile Include="Pipeline\PipelineContext.cs" />
+    <Compile Include="Pipeline\Stages\PublishStage.cs" />
+    <Compile Include="Pipeline\Step.cs" />
+    <Compile Include="Pipeline\WellKnownStep.cs" />
     <Compile Include="RequestResponse\InMemoryPendingRequestStore.cs" />
     <Compile Include="RequestResponse\IPendingRequestStore.cs" />
     <Compile Include="MessageBusBase.cs" />

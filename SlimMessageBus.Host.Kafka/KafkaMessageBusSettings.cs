@@ -29,6 +29,8 @@ namespace SlimMessageBus.Host.Kafka
         /// </summary>
         public Func<string, IDictionary<string, object>> ConsumerConfigFactory { get; set; }
 
+        public Func<object, int> CustomPartitioner { get; set; }
+
         public KafkaMessageBusSettings(string brokerList)
         {
             BrokerList = brokerList;
@@ -36,6 +38,7 @@ namespace SlimMessageBus.Host.Kafka
             ProducerFactory = (config) => new Producer(config);
             ConsumerConfigFactory = (group) => new Dictionary<string, object>();
             ConsumerFactory = (group, config) => new Consumer(config);
+            CustomPartitioner = null;
         }
     }
 }
