@@ -1,6 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Banzai;
+using SlimMessageBus.Host.Config;
 using SlimMessageBus.Host.Pipeline;
 
 namespace SlimMessageBus.Host.PipelineStages
@@ -10,22 +11,26 @@ namespace SlimMessageBus.Host.PipelineStages
 
         private IMessageSerializer serializer;
         private IMessageSerializer messageWithHeadersSerializer;
-        public SerializeRequestResponseMessage(IMessageSerializer serializer, IMessageSerializer messageWithHeadersSerializer) : base(WellKnownStep.Publish)
+        private RequestResponseSettings requestResponseSettings;
+        public SerializeRequestResponseMessage(IMessageSerializer serializer, IMessageSerializer messageWithHeadersSerializer, RequestResponseSettings requestResponseSettings) : base(WellKnownStep.Publish)
         {
             this.serializer = serializer;
             this.messageWithHeadersSerializer = messageWithHeadersSerializer;
+            this.requestResponseSettings = requestResponseSettings;
         }
 
         public override Task<bool> ShouldExecuteAsync(IExecutionContext<PipelineContext> context)
         {
-            return Task.FromResult(context.Subject.Intent == Intents.RequestResponse);
+            return Task.FromResult(context.Subject.Intent == Intents.RequestResponse &&
+                                   (context.Subject.Payload == null || context.Subject.Payload.Length == 0));
         }
 
         protected override Task<NodeResultStatus> PerformExecuteAsync(IExecutionContext<PipelineContext> context)
         {
             var subj = context.Subject;
 
-            var replyTo = context.Subject.Topic;
+            var replyTo = this.requestResponseSettings.Topic;
+            //var replyTo = context.Subject.ReplyTo;
             var created = DateTime.UtcNow;
             var expires = created.Add(context.Subject.RequestTimeout.GetValueOrDefault(TimeSpan.FromMinutes(1)));
             var payload = SerializeRequest(subj.MessageType, subj.Message, subj.RequestId, replyTo, expires);

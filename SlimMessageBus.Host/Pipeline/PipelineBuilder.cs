@@ -24,7 +24,7 @@ namespace SlimMessageBus.Host.Pipeline
             Steps.Add(new PipelineStages.GetRequestTimeoutStage(settings));
             Steps.Add(new PipelineStages.SerializeTransportMessageStage(settings.Serializer));
             Steps.Add(new SendInternalStage(settings));
-            Steps.Add(new PipelineStages.SerializeRequestResponseMessage(settings.Serializer, settings.MessageWithHeadersSerializer));
+            Steps.Add(new PipelineStages.SerializeRequestResponseMessage(settings.Serializer, settings.MessageWithHeadersSerializer, settings.RequestResponse));
             Steps.Add(new PublishStage(publish));
         }
         public IPipeline Build()

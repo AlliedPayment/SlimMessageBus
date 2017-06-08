@@ -113,7 +113,8 @@ namespace KafkaTest
 
         private static async Task<PingResponse> Send(IMessageBus _bus)
         {
-            return await _bus.Send<PingResponse>(new PingRequest() { Key = "Brian", Timestamp = DateTime.Now });
+            var req = new PingRequest() {Key = "Brian", Timestamp = DateTime.Now};
+            return await _bus.Send<PingResponse>(req, TimeSpan.FromMinutes(15));
         }
 
     }

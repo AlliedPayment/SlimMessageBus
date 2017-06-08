@@ -7,6 +7,7 @@ using System.Threading.Tasks.Dataflow;
 using Common.Logging;
 using Confluent.Kafka;
 using SlimMessageBus.Host.Config;
+using SlimMessageBus.Host.Pipeline;
 
 namespace SlimMessageBus.Host.Kafka
 {
@@ -52,7 +53,7 @@ namespace SlimMessageBus.Host.Kafka
             return consumers;
         }
 
-        private int _commitBatchSize = 10;
+        private int _commitBatchSize = 1;
 
         public void EnqueueMessage(Message msg)
         {
@@ -129,7 +130,21 @@ namespace SlimMessageBus.Host.Kafka
             {
                 // send the response (or error response)
                 var responsePayload = _messageBus.SerializeResponse(_settings.ResponseType, response, requestId, responseError);
-                await _messageBus.Publish(_settings.ResponseType, responsePayload, replyTo);
+                //brian
+                var context = new PipelineContext()
+                {
+                    Intent = Intents.Publish,
+                    MessageType = _settings.ResponseType,
+                    Payload = responsePayload,
+                    Topic = replyTo,
+                    RequestId = requestId,
+                    ResponseMessageType = _settings.ResponseType,
+       
+                };
+                await _messageBus.Settings.Pipeline.Send(context);
+                //await _messageBus.Publish(context);
+
+//                await _messageBus.Publish(_settings.ResponseType, response, replyTo);
             }
         }
 

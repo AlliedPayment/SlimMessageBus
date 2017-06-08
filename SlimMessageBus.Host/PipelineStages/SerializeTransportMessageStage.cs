@@ -19,7 +19,8 @@ namespace SlimMessageBus.Host.PipelineStages
 
         public override Task<bool> ShouldExecuteAsync(IExecutionContext<PipelineContext> context)
         {
-            return Task.FromResult(context.Subject.Intent == Intents.Publish);
+            return Task.FromResult(context.Subject.Intent == Intents.Publish && 
+                (context.Subject.Payload == null || context.Subject.Payload.Length == 0));
         }
 
         protected override Task<NodeResultStatus> PerformExecuteAsync(IExecutionContext<PipelineContext> context)

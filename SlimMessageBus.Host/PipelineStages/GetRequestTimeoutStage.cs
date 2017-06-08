@@ -24,6 +24,11 @@ namespace SlimMessageBus.Host.PipelineStages
 
         }
 
+        public override Task<bool> ShouldExecuteAsync(IExecutionContext<PipelineContext> context)
+        {
+            return Task.FromResult(publisherSettings.Any());
+        }
+
         protected virtual TimeSpan GetDefaultRequestTimeout(Type requestType, PublisherSettings publisherSettings)
         {
             var timeout = publisherSettings.Timeout ?? settings.RequestResponse.Timeout;

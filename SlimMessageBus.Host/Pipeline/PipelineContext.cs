@@ -26,6 +26,7 @@ namespace SlimMessageBus.Host.Pipeline
     public enum Intents
     {
         Publish,
-        RequestResponse
+        RequestResponse,
+        Response
     }
 }
